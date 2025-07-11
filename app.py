@@ -12,6 +12,9 @@ import uuid
 
 from backend.video_generator import VideoGenerator
 from backend.utils import get_available_models, validate_inputs, format_duration
+from backend.upscaler import VideoUpscaler
+from backend.frame_interpolator import FrameInterpolator
+from backend.multi_gpu import multi_gpu_manager
 
 # Page configuration
 st.set_page_config(
@@ -62,6 +65,10 @@ def init_session_state():
         st.session_state.current_job = None
     if 'video_generator' not in st.session_state:
         st.session_state.video_generator = VideoGenerator()
+    if 'upscaler' not in st.session_state:
+        st.session_state.upscaler = VideoUpscaler()
+    if 'frame_interpolator' not in st.session_state:
+        st.session_state.frame_interpolator = FrameInterpolator()
 
 def main():
     """Main application function"""
@@ -149,6 +156,70 @@ def main():
                 step=5,
                 help="More steps = better quality but slower generation"
             )
+        
+        # Enhanced Processing Options
+        with st.expander("🚀 Enhanced Processing"):
+            st.subheader("🔍 Video Upscaling")
+            enable_upscaling = st.checkbox(
+                "Enable Real-ESRGAN Upscaling",
+                help="Upscale generated videos to higher resolutions"
+            )
+            
+            if enable_upscaling:
+                upscale_models = st.session_state.upscaler.get_available_models()
+                upscale_model = st.selectbox(
+                    "Upscaling Model",
+                    list(upscale_models.keys()),
+                    help="Choose upscaling model type"
+                )
+                
+                upscale_factor = st.selectbox(
+                    "Upscale Factor",
+                    [2, 4],
+                    index=1,
+                    help="How much to upscale the video"
+                )
+            
+            st.subheader("🎞️ Frame Interpolation") 
+            enable_interpolation = st.checkbox(
+                "Enable RIFE Frame Interpolation",
+                help="Create smoother videos with higher FPS"
+            )
+            
+            if enable_interpolation:
+                target_fps = st.slider(
+                    "Target FPS",
+                    min_value=30,
+                    max_value=120,
+                    value=60,
+                    step=15,
+                    help="Target frames per second for smooth motion"
+                )
+                
+                interpolation_factor = st.selectbox(
+                    "Interpolation Factor",
+                    [2, 4, 8],
+                    index=1,
+                    help="How many frames to interpolate between existing frames"
+                )
+        
+        # Multi-GPU Information
+        with st.expander("🖥️ System Information"):
+            gpu_info = multi_gpu_manager.get_system_info()
+            
+            if gpu_info["cuda_available"]:
+                st.write(f"**GPUs Available:** {gpu_info['gpu_count']}")
+                
+                if gpu_info["gpu_count"] > 1:
+                    st.write(f"**Multi-GPU Mode:** {'Distributed' if gpu_info['is_distributed'] else 'DataParallel'}")
+                    
+                    if gpu_info["gpu_memory"]:
+                        for gpu_id, memory in gpu_info["gpu_memory"].items():
+                            st.write(f"**GPU {gpu_id}:** {memory['utilization_percent']:.1f}% used ({memory['reserved_gb']:.1f}GB/{memory['total_gb']:.1f}GB)")
+                else:
+                    st.write("**Single GPU Mode**")
+            else:
+                st.warning("CUDA not available - using CPU mode")
     
     # Main content area
     col1, col2 = st.columns([2, 1])
@@ -218,7 +289,14 @@ def main():
                 "seed": seed if seed != -1 else None,
                 "guidance_scale": guidance_scale,
                 "num_inference_steps": num_inference_steps,
-                "model": selected_model
+                "model": selected_model,
+                # Enhanced processing options
+                "enable_upscaling": enable_upscaling,
+                "upscale_model": upscale_model if enable_upscaling else None,
+                "upscale_factor": upscale_factor if enable_upscaling else None,
+                "enable_interpolation": enable_interpolation,
+                "target_fps": target_fps if enable_interpolation else None,
+                "interpolation_factor": interpolation_factor if enable_interpolation else None
             }
             
             # Start generation

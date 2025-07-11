@@ -15,6 +15,9 @@ import traceback
 
 from .skyreels_integration import SkyReelsGenerator
 from .utils import setup_environment, get_device_info, validate_cuda
+from .upscaler import VideoUpscaler
+from .frame_interpolator import FrameInterpolator
+from .multi_gpu import multi_gpu_manager
 
 @dataclass
 class GenerationJob:
@@ -35,6 +38,8 @@ class VideoGenerator:
     def __init__(self):
         self.jobs: Dict[str, GenerationJob] = {}
         self.skyreels_generator = None
+        self.upscaler = None
+        self.frame_interpolator = None
         self.device_info = get_device_info()
         self.setup_complete = False
         self._setup_lock = threading.Lock()
@@ -55,8 +60,26 @@ class VideoGenerator:
             # Initialize SkyReels generator
             self.skyreels_generator = SkyReelsGenerator()
             
+            # Initialize advanced features
+            try:
+                self.upscaler = VideoUpscaler()
+                print("✅ Video upscaler initialized")
+            except Exception as e:
+                print(f"⚠️ Video upscaler initialization failed: {e}")
+                self.upscaler = None
+            
+            try:
+                self.frame_interpolator = FrameInterpolator()
+                print("✅ Frame interpolator initialized")
+            except Exception as e:
+                print(f"⚠️ Frame interpolator initialization failed: {e}")
+                self.frame_interpolator = None
+            
+            # Optimize GPU memory
+            multi_gpu_manager.optimize_memory()
+            
             self.setup_complete = True
-            print("✅ VideoGenerator initialized successfully")
+            print("✅ VideoGenerator with advanced features initialized successfully")
             
         except Exception as e:
             print(f"❌ Failed to initialize VideoGenerator: {e}")
@@ -129,13 +152,18 @@ class VideoGenerator:
                 progress_callback=progress_callback
             )
             
+            # Post-processing: Apply enhancements
+            final_path = self._apply_post_processing(
+                result_path, job.params, progress_callback
+            )
+            
             # Mark as completed
             job.status = "completed"
             job.progress = 100.0
-            job.output_path = str(result_path)
+            job.output_path = str(final_path)
             job.end_time = time.time()
             
-            print(f"✅ Video generation completed: {result_path}")
+            print(f"✅ Video generation completed: {final_path}")
             
         except Exception as e:
             job.status = "failed"
@@ -216,6 +244,69 @@ class VideoGenerator:
             "cuda_available": torch.cuda.is_available(),
             "gpu_memory": self._get_gpu_memory_info() if torch.cuda.is_available() else None
         }
+    
+    def _apply_post_processing(
+        self, 
+        video_path: str, 
+        params: Dict[str, Any], 
+        progress_callback: Callable
+    ) -> str:
+        """Apply post-processing enhancements to generated video"""
+        
+        current_path = video_path
+        
+        try:
+            # Apply frame interpolation first (smoother motion)
+            if params.get("enable_interpolation", False) and self.frame_interpolator:
+                progress_callback(80, 100, "Applying frame interpolation...")
+                
+                interpolated_path = video_path.replace(".mp4", "_interpolated.mp4")
+                
+                current_path = self.frame_interpolator.interpolate_video(
+                    input_video_path=current_path,
+                    output_video_path=interpolated_path,
+                    target_fps=params.get("target_fps", 60),
+                    interpolation_factor=params.get("interpolation_factor", 2),
+                    progress_callback=lambda step, total, msg: progress_callback(
+                        80 + (step / total) * 10, 100, f"Interpolation: {msg}"
+                    )
+                )
+                
+                print(f"✅ Frame interpolation applied: {current_path}")
+            
+            # Apply upscaling second (higher resolution)
+            if params.get("enable_upscaling", False) and self.upscaler:
+                progress_callback(90, 100, "Applying video upscaling...")
+                
+                upscaled_path = current_path.replace(".mp4", "_upscaled.mp4")
+                
+                # Switch to specified model if needed
+                upscale_model = params.get("upscale_model")
+                if upscale_model:
+                    try:
+                        self.upscaler.switch_model(upscale_model)
+                    except Exception as e:
+                        print(f"⚠️ Failed to switch upscale model: {e}")
+                
+                current_path = self.upscaler.upscale_video(
+                    input_video_path=current_path,
+                    output_video_path=upscaled_path,
+                    scale_factor=params.get("upscale_factor", 4),
+                    progress_callback=lambda step, total, msg: progress_callback(
+                        90 + (step / total) * 10, 100, f"Upscaling: {msg}"
+                    )
+                )
+                
+                print(f"✅ Video upscaling applied: {current_path}")
+            
+            progress_callback(100, 100, "Post-processing complete!")
+            return current_path
+            
+        except Exception as e:
+            print(f"⚠️ Post-processing failed: {e}")
+            traceback.print_exc()
+            # Return original path if post-processing fails
+            return video_path
     
     def _get_gpu_memory_info(self) -> Dict[str, float]:
         """Get GPU memory information"""

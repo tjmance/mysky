@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  ai-video-studio:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ai-video-generation-studio
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./outputs:/app/outputs
+      - ./models:/app/models
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+      - PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - ai-video-network
+
+  # Optional: Add monitoring with GPU metrics
+  gpu-monitor:
+    image: nvidia/cuda:12.1-runtime-ubuntu22.04
+    container_name: gpu-monitor
+    command: |
+      bash -c "
+        apt-get update && apt-get install -y python3 python3-pip &&
+        pip3 install gpustat &&
+        while true; do
+          echo '=== GPU Status at $(date) ===' &&
+          gpustat --json | python3 -m json.tool &&
+          sleep 30
+        done
+      "
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: unless-stopped
+    depends_on:
+      - ai-video-studio
+    networks:
+      - ai-video-network
+
+networks:
+  ai-video-network:
+    driver: bridge
+
+volumes:
+  outputs-data:
+  models-data:
+  uploads-data:
+  logs-data:
