@@ -41,10 +41,15 @@ COPY requirements-advanced.txt .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir -r requirements-advanced.txt
+# Pre-install the heavyweight Hugging Face stack with CUDA wheels first to avoid resolver back-tracking
+RUN pip install --no-cache-dir \
+        torch==2.2.2 torchvision==0.17.2 torchaudio==2.2.2 \
+        diffusers==0.28.0 transformers==4.41.2 accelerate==0.29.3 \
+        --extra-index-url https://download.pytorch.org/whl/cu121
+# Install the remaining advanced dependencies without re-resolving the HF stack
+RUN pip install --no-cache-dir --no-deps -r requirements-advanced.txt
 
-# Install PyTorch with CUDA support
-RUN pip install --no-cache-dir torch==2.2.2 torchvision==0.17.2 torchaudio==2.2.2 --index-url https://download.pytorch.org/whl/cu121
+# (The HF stack is already installed above, so no separate PyTorch step is necessary)
 
 # Copy application files
 COPY . .
