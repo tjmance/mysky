@@ -52,7 +52,7 @@ A locally hosted AI video generation system powered by **SkyReels v2** that runs
 
 1. **Clone the repository**:
 ```bash
-git clone <repository-url>
+git clone https://github.com/tjmance/mysky.git
 cd ai-video-generation-studio
 ```
 
@@ -100,7 +100,7 @@ mkdir -p outputs models temp uploads
 
 5. **Download SkyReels (optional)**:
 ```bash
-git clone https://github.com/SkyworkAI/SkyReels.git models/SkyReels
+git clone https://huggingface.co/Skywork/SkyReels-V2-I2V-14B-720P
 ```
 
 ## 🎮 Usage
