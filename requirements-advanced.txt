@@ -10,7 +10,7 @@ gfpgan>=1.3.8
 cupy-cuda12x>=12.0.0
 
 # ControlNet and advanced diffusion
-controlnet-aux>=0.4.0
+controlnet-aux==0.0.10        # latest on PyPI
 xformers>=0.0.22
 compel>=2.0.0
 
