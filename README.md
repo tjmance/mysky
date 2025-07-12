@@ -98,9 +98,13 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 mkdir -p outputs models temp uploads
 ```
 
-5. **Download SkyReels (optional)**:
+5. **Download SkyReels repository and model**:
 ```bash
-git clone https://huggingface.co/Skywork/SkyReels-V2-I2V-14B-720P
+# Download SkyReels repository
+git clone https://github.com/SkyworkAI/SkyReels-V2.git models/SkyReels-V2
+
+# Download SkyReels model
+git clone https://huggingface.co/Skywork/SkyReels-V2-I2V-14B-720P models/SkyReels-V2-I2V-14B-720P
 ```
 
 ## 🎮 Usage

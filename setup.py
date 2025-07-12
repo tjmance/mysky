@@ -1,4 +1,4 @@
-THIS SHOULD BE A LINTER ERROR#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Setup script for AI Video Generation Studio
 Installs dependencies and configures the environment
@@ -158,29 +158,50 @@ def setup_directories():
         print(f"✅ Created: {directory}")
 
 def download_skyreels():
-    """Download SkyReels repository"""
+    """Download SkyReels repository and model"""
     print("\n📥 Setting up SkyReels v2...")
     
-    skyreels_path = Path("models/SkyReels")
+    # Download SkyReels repository
+    skyreels_path = Path("models/SkyReels-V2")
     
-    if skyreels_path.exists():
-        print("✅ SkyReels directory already exists")
-        return True
+    if not skyreels_path.exists():
+        try:
+            subprocess.run([
+                "git", "clone", 
+                "https://github.com/SkyworkAI/SkyReels-V2.git",
+                str(skyreels_path)
+            ], check=True, capture_output=True)
+            
+            print("✅ SkyReels repository downloaded")
+            
+        except subprocess.CalledProcessError as e:
+            print(f"⚠️ Failed to download SkyReels repository: {e}")
+            print("SkyReels repository will be set up automatically on first run")
+    else:
+        print("✅ SkyReels repository already exists")
     
-    try:
-        subprocess.run([
-            "git", "clone", 
-            "https://github.com/SkyworkAI/SkyReels.git",
-            str(skyreels_path)
-        ], check=True, capture_output=True)
-        
-        print("✅ SkyReels repository downloaded")
+    # Download SkyReels model
+    model_path = Path("models/SkyReels-V2-I2V-14B-720P")
+    
+    if not model_path.exists():
+        try:
+            print("📥 Downloading SkyReels model (this may take a while)...")
+            subprocess.run([
+                "git", "clone", 
+                "https://huggingface.co/Skywork/SkyReels-V2-I2V-14B-720P",
+                str(model_path)
+            ], check=True, capture_output=True)
+            
+            print("✅ SkyReels model downloaded")
+            return True
+            
+        except subprocess.CalledProcessError as e:
+            print(f"⚠️ Failed to download SkyReels model: {e}")
+            print("SkyReels model will be set up automatically on first run")
+            return False
+    else:
+        print("✅ SkyReels model already exists")
         return True
-        
-    except subprocess.CalledProcessError as e:
-        print(f"⚠️ Failed to download SkyReels: {e}")
-        print("SkyReels will be set up automatically on first run")
-        return False
 
 def test_installation():
     """Test the installation"""
