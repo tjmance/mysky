@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+THIS SHOULD BE A LINTER ERROR#!/usr/bin/env python3
 """
 Setup script for AI Video Generation Studio
 Installs dependencies and configures the environment
