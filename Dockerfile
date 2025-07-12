@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.7
 # AI Video Generation Studio Docker Container
 FROM nvidia/cuda:12.9.1-devel-ubuntu22.04
 
