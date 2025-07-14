@@ -1,0 +1,123 @@
+version: '3.8'
+
+services:
+  # Face swapping service - GPU 0, stream profile only
+  faceswap:
+    build:
+      context: ../docker/faceswap
+      dockerfile: Dockerfile
+    container_name: ai-stack-faceswap
+    profiles:
+      - stream
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+      - NVIDIA_VISIBLE_DEVICES=0
+      - CUDA_DEVICE_ORDER=PCI_BUS_ID
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['0']
+              capabilities: [gpu]
+    volumes:
+      - ../models:/app/models:rw
+      - ../audio:/app/audio:rw
+      - faceswap_temp:/app/temp
+      - faceswap_output:/app/output
+    ports:
+      - "7860:7860"
+    networks:
+      - ai-stack
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7860/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # MediaPipe tracking service - GPU 0, stream profile only
+  tracker:
+    build:
+      context: ../docker/faceswap
+      dockerfile: Dockerfile
+    container_name: ai-stack-tracker
+    profiles:
+      - stream
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+      - NVIDIA_VISIBLE_DEVICES=0
+      - CUDA_DEVICE_ORDER=PCI_BUS_ID
+      - SERVICE_MODE=tracker
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['0']
+              capabilities: [gpu]
+    volumes:
+      - ../models:/app/models:ro
+      - tracker_temp:/app/temp
+    ports:
+      - "7865:7865"
+    networks:
+      - ai-stack
+    restart: unless-stopped
+    command: ["--mode", "tracker", "--host", "0.0.0.0", "--port", "7865"]
+
+  # Audio processing service - GPU 1, always available
+  audio:
+    build:
+      context: ../docker/audio
+      dockerfile: Dockerfile
+    container_name: ai-stack-audio
+    environment:
+      - CUDA_VISIBLE_DEVICES=1
+      - NVIDIA_VISIBLE_DEVICES=1
+      - CUDA_DEVICE_ORDER=PCI_BUS_ID
+      - HF_HOME=/app/models
+      - TORCH_HOME=/app/models
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['1']
+              capabilities: [gpu]
+    volumes:
+      - ../models:/app/models:rw
+      - ../audio:/app/audio:rw
+      - audio_temp:/app/temp
+      - audio_cache:/root/.cache
+    ports:
+      - "7861:7861"  # TTS WebUI
+      - "7862:7862"  # RVC WebUI
+      - "7863:7863"  # MusicGen WebUI
+    networks:
+      - ai-stack
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7861/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+networks:
+  ai-stack:
+    driver: bridge
+    name: ai-stack-network
+
+volumes:
+  faceswap_temp:
+    name: ai-stack-faceswap-temp
+  faceswap_output:
+    name: ai-stack-faceswap-output
+  tracker_temp:
+    name: ai-stack-tracker-temp
+  audio_temp:
+    name: ai-stack-audio-temp
+  audio_cache:
+    name: ai-stack-audio-cache

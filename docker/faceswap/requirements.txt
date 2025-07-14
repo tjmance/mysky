@@ -1,0 +1,19 @@
+# Additional requirements for faceswap service
+# Most packages are installed in Dockerfile, these are extras
+
+# Development and debugging
+ipython
+jupyter
+
+# Additional image processing
+imageio
+imageio-ffmpeg
+skimage
+
+# Networking and monitoring
+requests
+psutil
+
+# Additional ML utilities
+einops
+timm

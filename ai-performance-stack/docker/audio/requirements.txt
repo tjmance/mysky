@@ -1,0 +1,27 @@
+# Additional requirements for audio service
+# Most packages are installed in Dockerfile, these are extras
+
+# Development and debugging
+ipython
+jupyter
+
+# Additional audio processing
+aubio
+essentia
+madmom
+pretty_midi
+
+# Networking and monitoring
+requests
+psutil
+
+# Additional ML utilities
+einops
+timm
+
+# Real-time audio processing
+python-rtmidi
+mido
+
+# Audio file format support
+mutagen

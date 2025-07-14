@@ -1,0 +1,109 @@
+# AI Performance Stack - Git Ignore
+
+# Models and Weights (too large for git)
+models/**/*.pth
+models/**/*.bin
+models/**/*.safetensors
+models/**/*.ckpt
+models/**/*.pt
+models/**/*.onnx
+models/**/*.pb
+models/**/*.tflite
+
+# Allow model directory structure but not the files
+!models/*/
+!models/*/.gitkeep
+
+# Audio files
+audio/**/*.wav
+audio/**/*.mp3
+audio/**/*.mp4
+audio/**/*.flac
+audio/**/*.ogg
+audio/**/*.m4a
+
+# Allow audio directory structure
+!audio/*/
+!audio/*/.gitkeep
+
+# Docker volumes and temporary files
+.docker/
+temp/
+tmp/
+cache/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Environment variables
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Docker
+.dockerignore
+
+# Temporary files
+*.tmp
+*.temp
+
+# Generated outputs
+outputs/
+generations/
+results/
+
+# Local configuration
+config.local.yml
+docker-compose.override.yml

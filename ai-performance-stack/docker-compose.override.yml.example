@@ -1,0 +1,53 @@
+# Example Docker Compose Override File
+# Copy this to docker-compose.override.yml and customize as needed
+# This file allows you to modify the setup without changing the main compose file
+
+version: '3.8'
+
+services:
+  # Example: Single GPU setup
+  # Uncomment and modify for single GPU systems
+  # faceswap:
+  #   environment:
+  #     - CUDA_VISIBLE_DEVICES=0
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             device_ids: ['0']
+  #             capabilities: [gpu]
+  
+  # audio:
+  #   environment:
+  #     - CUDA_VISIBLE_DEVICES=0
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             device_ids: ['0']
+  #             capabilities: [gpu]
+
+  # Example: Custom port mappings
+  # faceswap:
+  #   ports:
+  #     - "8860:7860"
+  
+  # audio:
+  #   ports:
+  #     - "8861:7861"
+  #     - "8862:7862"
+  #     - "8863:7863"
+
+  # Example: Additional environment variables
+  # audio:
+  #   environment:
+  #     - CUSTOM_MODEL_PATH=/app/models/custom
+  #     - DEBUG=true
+
+  # Example: Additional volume mounts
+  # audio:
+  #   volumes:
+  #     - ./custom_models:/app/custom_models:ro
+  #     - /host/path/data:/app/data:rw

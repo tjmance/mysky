@@ -1,0 +1,10 @@
+# This file keeps the models directory in git
+# Place your AI model files in subdirectories here:
+# - deepfacelive/  - DeepFaceLive model files
+# - instantid/     - InstantID model files  
+# - musicgen/      - MusicGen model files
+# - rvc/           - RVC model files
+# - bark/          - Bark TTS model files
+# - xtts/          - XTTS model files
+# - demucs/        - Demucs model files
+# - tts/           - Other TTS model files

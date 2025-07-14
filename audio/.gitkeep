@@ -1,0 +1,5 @@
+# This file keeps the audio directory in git
+# Directory structure:
+# - raw/      - Raw audio input files
+# - finished/ - Processed/generated audio outputs
+# - stems/    - Audio stems from separation
