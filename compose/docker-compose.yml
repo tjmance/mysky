@@ -1,0 +1,74 @@
+version: "3.9"
+
+# ---------------------------------------------------------------------------
+# Compose profiles:
+#   stream → faceswap + tracker (GPU-0)  + audio (GPU-1)
+# ---------------------------------------------------------------------------
+services:
+  # -------------------------------------------------------------------------
+  # Real-time face swap (DeepFaceLive + InstantID)
+  # -------------------------------------------------------------------------
+  faceswap:
+    build:
+      context: ../docker/faceswap
+    container_name: faceswap
+    profiles: ["stream"]
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+    volumes:
+      - ../models:/models:ro
+      - ../audio:/audio
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: "nvidia"
+              count: 1
+              capabilities: ["gpu"]
+    restart: unless-stopped
+
+  # -------------------------------------------------------------------------
+  # Tracker (MediaPipe landmark extraction) – same image, different command
+  # -------------------------------------------------------------------------
+  tracker:
+    build:
+      context: ../docker/faceswap
+    container_name: tracker
+    profiles: ["stream"]
+    command: python3 /opt/DeepFaceLive/tools/mediapipe_tracker.py
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+    volumes:
+      - ../models:/models:ro
+      - ../audio:/audio
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: "nvidia"
+              count: 1
+              capabilities: ["gpu"]
+    restart: unless-stopped
+
+  # -------------------------------------------------------------------------
+  # Always-on TTS WebUI bundle (Bark, XTTS, MusicGen, YuE, RVC, Demucs)
+  # -------------------------------------------------------------------------
+  audio:
+    build:
+      context: ../docker/audio
+    container_name: audio
+    environment:
+      - CUDA_VISIBLE_DEVICES=1
+    volumes:
+      - ../models:/models:ro
+      - ../audio:/audio
+    ports:
+      - "7860:7860"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: "nvidia"
+              count: 1
+              capabilities: ["gpu"]
+    restart: unless-stopped
